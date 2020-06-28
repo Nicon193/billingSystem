@@ -1,4 +1,5 @@
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,95 +20,104 @@ public class App {
     public String bestCharge(List<String> inputs) {
         //TODO: write code here
         List<Item> items=itemRepository.findAll();
-        HashMap<Item,Integer> bills=bill(inputs,items);
+        HashMap<Item,Integer> menu=new HashMap<>();
 
-        StringBuffer order =detail(bills);
-
-
-
-
-
-        return order.toString();
-    }
-
-    public HashMap<Item,Integer> bill(List<String>inputs,List<Item> items){
-        HashMap<Item,Integer> bills =new HashMap<Item, Integer>();
-        for (int i = 0; i <inputs.size() ; i++) {
-            String[] s=inputs.get(i).split("  ");
-            for (int j= 0;j<items.size();j++){
-                if (s[0].equals(items.get(j).getId())){
-                    bills.put(items.get(j),Integer.parseInt(s[2]));
-                }
-            }
-        }
-        return bills;
-    }
-
-
-
-    public StringBuffer detail(HashMap<Item,Integer> bills){
-        double total =0;
-        double half_Price =0;
-        int number =0;
-        boolean half =false;
-        List<String> cutFood=new ArrayList<>();
-        List<SalesPromotion> salesPromotions=salesPromotionRepository.findAll();
-
-
-        StringBuffer order =new StringBuffer();
-        order.append("============= Order details =============\n");
-
-        Iterator iterator=bills.keySet().iterator();
-
-        while(iterator.hasNext()){
-            Item item= (Item) iterator.next();
-            number = bills.get(item);
-            order.append(item.getName()+" x "+number+" = "+number*item.getPrice()+" yuan\n");
-            total+=number*item.getPrice();
-
-            if(salesPromotions.get(1).getRelatedItems().contains(item.getId())){
-                half=true;
-                half_Price+=(number*item.getPrice())/2;
-                for (int i = 0; i <salesPromotions.get(1).getRelatedItems().size() ; i++) {
-                    if(item.getId().equals(salesPromotions.get(1).getRelatedItems().get(i))){
-                        cutFood.add(item.getName());
+        for(int i=0;i<inputs.size();i++){
+            String[] temp=inputs.get(i).split(" ");
+            for(int j=0;j<items.size();j++){
+                if(temp[0].equals(items.get(j).getId())){
+                    Item item=items.get(j);
+                    if(menu.get(item)==null){
+                        menu.put(item,Integer.parseInt(temp[2]));
+                    }else {
+                        Integer itemNum=menu.get(item);
+                        menu.put(item,Integer.parseInt(temp[2])+itemNum);
                     }
                 }
             }
         }
 
-        order.append("-----------------------------------\n");
+        Result result1=halfPrice(menu);
+        Result result2=cutPrice(result1.getTotalPrice()+result1.getCutPrice());
 
-        if(half){
-            total-=half_Price;
-            order.append("Promotion used:\n");
-            order.append("Half price for certain dishes (");
-            for (int i = 0; i < cutFood.size(); i++) {
-                 if(i!=cutFood.size()-1){
-                     order.append(cutFood.get(i)+"，");
-                 }else{
-                     order.append(cutFood.get(i)+")，saving "+half_Price+" yuan\n");
-                     order.append("-----------------------------------\n");
-                 }
+        if(result1.getTotalPrice()<=result2.getTotalPrice()){
+
+            if(result1.getCutPrice()==0.0){
+                result1.getResultString().append("Total："+result1.getTotalPrice().intValue()+" yuan\n"+
+                        "===================================");
+            }else{
+                result1.getResultString().append(result1.getFomalString());
+                result1.getResultString().append("Total："+result1.getTotalPrice().intValue()+" yuan\n"+
+                        "===================================");
             }
-
+        }else{
+            result1.getResultString().append(result2.getFomalString());
+            result1.getResultString().append("Total："+result2.getTotalPrice().intValue()+" yuan\n"+
+                    "===================================");
         }
 
-        if(total>=30){
-            total -=6.0;
-            order.append("Promotion used:\n" +
-                    "满30减6 yuan，saving 6 yuan\n" +
-                    "-----------------------------------\n");
-        }
-
-        order.append("Total："+total+" yuan\n"+
-                "===================================");
-
-        return order;
-
+        return String.valueOf(result1.getResultString());
     }
 
+    public Result halfPrice(HashMap<Item,Integer> menu){
+        Iterator iterator=menu.keySet().iterator();
+        List<String> cutMeal=new ArrayList<>();
+        List<SalesPromotion> salesPromotions=salesPromotionRepository.findAll();
 
+        Double total=0.0;
+        Double cut=0.0;
+        Integer num=0;
+        boolean isHalf=false;
+        StringBuffer para1=new StringBuffer("============= Order details =============\n");
+        while(iterator.hasNext()){
+            isHalf=false;
+            Item item= (Item) iterator.next();
+            num = menu.get(item);
+            para1.append(item.getName()+" x " + num + " = " + ((Double)(num*item.getPrice())).intValue() + " yuan\n");
+            if(!salesPromotions.get(1).getRelatedItems().isEmpty()){
+                for(int i=0;i<salesPromotions.get(1).getRelatedItems().size();i++){
+                    if(item.getId().equals(salesPromotions.get(1).getRelatedItems().get(i))){
+                        isHalf=true;
+                        cutMeal.add(item.getName());
+                    }
+                }
+            }
+            if(isHalf){
+                total += (item.getPrice()/2)*num;
+                cut += (item.getPrice()/2)*num;
+            }
+            else{
+                total += (item.getPrice())*num;
+            }
+        }
+        para1.append("-----------------------------------\n");
+        StringBuffer para2=new StringBuffer();
 
+        if(cut>=0.0){
+            para2.append("Promotion used:\n");
+            para2.append("Half price for certain dishes (");
+            for(int i=0;i<cutMeal.size();i++){
+                if(i!=cutMeal.size()-1){
+                    para2.append(cutMeal.get(i)+"，");
+                }else {
+                    para2.append(cutMeal.get(i)+")，saving "+cut.intValue()+" yuan\n");
+                    para2.append("-----------------------------------\n");
+                }
+            }
+        }
+        Result result = new Result(para1,para2,total,cut);
+        return result;
+    }
 
+    public Result cutPrice(Double total){
+        if(total >= 30){
+            total -=6.0;
+        }
+        StringBuffer para1=new StringBuffer();
+        StringBuffer para2=new StringBuffer(
+                "Promotion used:\n" +
+                "满30减6 yuan，saving 6 yuan\n" +
+                "-----------------------------------\n");
+        return new Result(para1,para2,total,0.0);
+    }
 }
