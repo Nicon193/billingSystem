@@ -33,10 +33,10 @@ public class App {
     public HashMap<Item,Integer> bill(List<String>inputs,List<Item> items){
         HashMap<Item,Integer> bills =new HashMap<Item, Integer>();
         for (int i = 0; i <inputs.size() ; i++) {
-            String[] s=inputs.get(i).split(" x ");
+            String[] s=inputs.get(i).split("  ");
             for (int j= 0;j<items.size();j++){
                 if (s[0].equals(items.get(j).getId())){
-                    bills.put(items.get(j),Integer.parseInt(s[1]));
+                    bills.put(items.get(j),Integer.parseInt(s[2]));
                 }
             }
         }
