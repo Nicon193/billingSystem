@@ -46,9 +46,9 @@ public class App {
 
 
     public StringBuffer detail(HashMap<Item,Integer> bills){
-        double total =0;
-        double half_Price =0;
-        int number =0;
+        Double total =0.0;
+        Double half_Price =0.0;
+        Integer number =0;
         boolean half =false;
         List<String> cutFood=new ArrayList<>();
         List<SalesPromotion> salesPromotions=salesPromotionRepository.findAll();
@@ -62,7 +62,7 @@ public class App {
         while(iterator.hasNext()){
             Item item= (Item) iterator.next();
             number = bills.get(item);
-            order.append(item.getName()+" x "+number+" = "+(int)(number*item.getPrice())+" yuan\n");
+            order.append(item.getName()+" x "+number+" = "+((Double)(number*item.getPrice())).intValue()+" yuan\n");
             total+=number*item.getPrice();
 
             if(salesPromotions.get(1).getRelatedItems().contains(item.getId())){
@@ -86,7 +86,7 @@ public class App {
                  if(i!=cutFood.size()-1){
                      order.append(cutFood.get(i)+"，");
                  }else{
-                     order.append(cutFood.get(i)+")，saving "+(int)half_Price+" yuan\n");
+                     order.append(cutFood.get(i)+")，saving "+half_Price.intValue()+" yuan\n");
                      order.append("-----------------------------------\n");
                  }
             }
@@ -100,7 +100,7 @@ public class App {
                     "-----------------------------------\n");
         }
 
-        order.append("Total："+(int)total+" yuan\n"+
+        order.append("Total："+total.intValue()+" yuan\n"+
                 "===================================");
 
         return order;
