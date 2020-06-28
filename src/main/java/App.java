@@ -62,7 +62,7 @@ public class App {
         while(iterator.hasNext()){
             Item item= (Item) iterator.next();
             number = bills.get(item);
-            order.append(item.getName()+" x "+number+" = "+number*item.getPrice()+" yuan\n");
+            order.append(item.getName()+" x "+number+" = "+(int)(number*item.getPrice())+" yuan\n");
             total+=number*item.getPrice();
 
             if(salesPromotions.get(1).getRelatedItems().contains(item.getId())){
@@ -86,7 +86,7 @@ public class App {
                  if(i!=cutFood.size()-1){
                      order.append(cutFood.get(i)+"，");
                  }else{
-                     order.append(cutFood.get(i)+")，saving "+half_Price+" yuan\n");
+                     order.append(cutFood.get(i)+")，saving "+(int)half_Price+" yuan\n");
                      order.append("-----------------------------------\n");
                  }
             }
@@ -94,13 +94,13 @@ public class App {
         }
 
         if(total>=30){
-            total -=6.0;
+            total -=6;
             order.append("Promotion used:\n" +
                     "满30减6 yuan，saving 6 yuan\n" +
                     "-----------------------------------\n");
         }
 
-        order.append("Total："+total+" yuan\n"+
+        order.append("Total："+(int)total+" yuan\n"+
                 "===================================");
 
         return order;
